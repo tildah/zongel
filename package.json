@@ -1,0 +1,22 @@
+{
+  "name": "zongel",
+  "version": "0.0.1",
+  "description": "A model class for ZinkyJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/tildah/zongel.git"
+  },
+  "author": "Tildah",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tildah/zongel/issues"
+  },
+  "homepage": "https://github.com/tildah/zongel#readme",
+  "dependencies": {
+    "ajv": "^6.10.0"
+  }
+}
