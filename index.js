@@ -9,7 +9,7 @@ const proxyHandler = {
   }
 };
 
-class Mongel {
+class Zongel {
 
   constructor(db) {
     this.db = db;
@@ -22,20 +22,40 @@ class Mongel {
     return this.db.collection(this.collectionName);
   }
 
-  insertOne(...args) {
-    const valid = ajv.validate(this.schema, args[0]);
-    if (!valid) return this.onReject(ajv.errors);
-    return this.collection.insertOne(...args);
+  addQueryFields(options) {
+    const res = options || {};
+    res.projection = {};
+    if (this.schema.private)
+      this.schema.private.forEach(f => { res.projection[f] = 0; });
+    return res;
   }
 
-  insertMany(...args) {
+  async find(...args) {
+    args[1] = this.addQueryFields(args[1]);
+    return await this.collection.find(...args).toArray();
+  }
+
+  async findOne(...args) {
+    args[1] = this.addQueryFields(args[1]);
+    return await this.collection.findOne(...args);
+  }
+
+  async insertOne(...args) {
+    const valid = ajv.validate(this.schema, args[0]);
+    if (!valid) return this.onReject(ajv.errors);
+    const result = await this.collection.insertOne(...args);
+    return this.allResult ? result : result.ops[0]
+  }
+
+  async insertMany(...args) {
     const schema = {
       type: "array",
       items: { type: "object", ...this.schema }
     };
     const valid = ajv.validate(schema, args[0]);
     if (!valid) return this.onReject(ajv.errors);
-    return this.collection.insertMany(...args);
+    const result = await this.collection.insertMany(...args);
+    return this.allResult ? result : result.ops
   }
 
   updateOne(...args) {
@@ -60,10 +80,10 @@ class Mongel {
     if (!unsetValid) return this.onReject([{ message: 'Cannot unset required property' }]);
   }
 
-  static onReject(errors) {
-    console.error(errors);
+  onReject(errors) {
+    throw new Error(errors.reduce((s, e) => s += `\n${e.message}`, ""))
   }
 
 }
 
-module.exports = Mongel;
+module.exports = Zongel;
