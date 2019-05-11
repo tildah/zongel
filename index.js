@@ -1,4 +1,4 @@
-const ajv = new require('ajv')();
+const ajv = require("./validator.js");
 
 const ERRNCL = `Unknown collection name. 
 Please add a getter "collectionName" to the class`;
@@ -22,12 +22,13 @@ class Zongel {
     return this.db.collection(this.collectionName);
   }
 
-  addQueryFields(options) {
-    const res = options || {};
-    res.projection = {};
-    if (this.schema.private)
-      this.schema.private.forEach(f => { res.projection[f] = 0; });
-    return res;
+  addQueryFields(options = {}) {
+    options.projection = {};
+    Object.keys(this.schema.properties).forEach(key => {
+      const value = this.schema.properties[key];
+      if(value.private) options.projection[key] = 0;
+    });
+    return options;
   }
 
   async find(...args) {
@@ -81,7 +82,7 @@ class Zongel {
   }
 
   onReject(errors) {
-    throw new Error(errors.reduce((s, e) => s += `\n${e.message}`, ""))
+    throw new Error(errors.reduce((s, e) => s += `\n${e.dataPath} ${e.message}`, ""))
   }
 
 }

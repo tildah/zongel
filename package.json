@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/tildah/zongel#readme",
   "dependencies": {
-    "ajv": "^6.10.0"
+    "mongodb": "",
+    "super-ajv": "github:burawi/super-ajv"
   }
 }
