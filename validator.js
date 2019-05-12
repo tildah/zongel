@@ -2,7 +2,8 @@ const Ajv = require("super-ajv");
 const ObjectID = require("mongodb").ObjectID;
 
 const ajv = new Ajv({
-  coerceTypes: true
+  coerceTypes: true,
+  useDefaults: true
 });
 
 ajv.addType("date", {
@@ -24,25 +25,6 @@ ajv.addType("mongoid", {
       if (!re.test(data)) return false;
       object[prop] = args[2].opts.coerceTypes ? ObjectID(data) : data;
       return true;
-    }
-  }
-})
-
-ajv.addKeyword("laterThan", {
-  compile: (refDate, schema) => {
-    return (data) => {
-      const diff = new Date(refDate).getTime() - new Date(data).getTime();
-      return schema.strict ? diff < 0 : diff <= 0;
-    }
-  }
-})
-
-ajv.addKeyword("earlierThan", {
-  modifying: true,
-  compile: (refDate, schema) => {
-    return (data) => {
-      const diff = new Date(refDate).getTime() - new Date(data).getTime();
-      return schema.strict ? diff > 0 : diff >= 0;
     }
   }
 })

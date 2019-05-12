@@ -11,23 +11,53 @@ const proxyHandler = {
 
 class Zongel {
 
-  constructor(db) {
-    this.db = db;
+  constructor(md) {
+    this.md = md;
+    this.ajv = ajv;
+    if (this.customTypes) this.addCustomTypes();
+    this.createUniques();
     return new Proxy(this, proxyHandler)
   }
 
-
   get collection() {
     if (!this.collectionName) throw new Error(ERRNCL);
-    return this.db.collection(this.collectionName);
+    return this.md.A.db.collection(this.collectionName);
+  }
+
+  get privateKeys() {
+    return Object.keys(this.schema).filter(key => this.schema[key].private)
+  }
+
+  get requiredKeys() {
+    return Object.keys(this.schema).filter(key => this.schema[key].required)
+  }
+
+  get ajvSchema() {
+    return { properties: this.schema };
+  }
+
+  addCustomTypes() {
+    this.customTypes.forEach(ct => {
+      this.ajv.addType(ct.name, ct.opts);
+    });
+  }
+
+  createUniques() {
+    Object.keys(this.schema).forEach(key => {
+      const prop = this.schema[key];
+      if (!prop.unique) return;
+      this.collection.createIndex({ [key]: 1 }, { unique: true })
+    })
+  }
+
+  deletePrivate(item = {}) {
+    this.privateKeys.forEach(key => { delete item[key]; })
+    return item;
   }
 
   addQueryFields(options = {}) {
     options.projection = {};
-    Object.keys(this.schema.properties).forEach(key => {
-      const value = this.schema.properties[key];
-      if(value.private) options.projection[key] = 0;
-    });
+    this.privateKeys.forEach(key => { options.projection[key] = 0; });
     return options;
   }
 
@@ -42,19 +72,19 @@ class Zongel {
   }
 
   async insertOne(...args) {
-    const valid = ajv.validate(this.schema, args[0]);
-    if (!valid) return this.onReject(ajv.errors);
+    const valid = this.ajv.validate(this.ajvSchema, args[0]);
+    if (!valid) return this.onReject(this.ajv.errors);
     const result = await this.collection.insertOne(...args);
-    return this.allResult ? result : result.ops[0]
+    return this.allResult ? result : this.deletePrivate(result.ops[0])
   }
 
   async insertMany(...args) {
     const schema = {
       type: "array",
-      items: { type: "object", ...this.schema }
+      items: { type: "object", ...this.ajvSchema }
     };
-    const valid = ajv.validate(schema, args[0]);
-    if (!valid) return this.onReject(ajv.errors);
+    const valid = this.ajv.validate(schema, args[0]);
+    if (!valid) return this.onReject(this.ajv.errors);
     const result = await this.collection.insertMany(...args);
     return this.allResult ? result : result.ops
   }
@@ -70,15 +100,15 @@ class Zongel {
   }
 
   validateUpdate(...args) {
-    const setSchema = { ...this.schema };
-    delete setSchema.required;
-    const setValid = ajv.validate(setSchema, args[1].$set);
-    if (!setValid) return this.onReject(ajv.errors);
+    this.requiredKeys.forEach(key => { delete this.schema[key].required; })
 
-    const unsetValid = this.schema.required.every(p => {
-      return !args[1].$unset || !args[1].$unset.hasOwnProperty(p)
-    })
-    if (!unsetValid) return this.onReject([{ message: 'Cannot unset required property' }]);
+    const setValid = this.ajv.validate(this.ajvSchema, args[1].$set);
+    if (!setValid) return this.onReject(this.ajv.errors);
+
+    const isUnsettingRequired = Object.keys(args[1].$unset)
+      .some(key => this.requiredKeys.includes(key))
+    if (isUnsettingRequired)
+      return this.onReject([{ message: 'Cannot unset required property' }]);
   }
 
   onReject(errors) {
