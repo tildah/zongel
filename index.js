@@ -68,6 +68,10 @@ class Zongel {
     return await this.collection.find(...args).toArray();
   }
 
+  async aggregate(...args) {
+    return await this.collection.aggregate(...args).toArray();
+  }
+
   async findOne(...args) {
     args[1] = this.addQueryFields(args[1]);
     return await this.collection.findOne(...args);
