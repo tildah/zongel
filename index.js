@@ -36,6 +36,8 @@ class Zongel {
     return { properties: this.schema };
   }
 
+  get timestamps() { return { createdAt: 1, updatedAt: 1 }; }
+
   addCustomTypes() {
     this.customTypes.forEach(ct => {
       this.ajv.addType(ct.name, ct.opts);
@@ -74,6 +76,7 @@ class Zongel {
   async insertOne(...args) {
     const valid = this.ajv.validate(this.ajvSchema, args[0]);
     if (!valid) return this.onReject(this.ajv.errors);
+    if (this.timestamps.createdAt) args[0].createdAt = new Date();
     const result = await this.collection.insertOne(...args);
     return this.allResult ? result : this.deletePrivate(result.ops[0])
   }
@@ -91,6 +94,8 @@ class Zongel {
 
   updateOne(...args) {
     this.validateUpdate(...args);
+    if (this.timestamps.updatedAt)
+      args[1].$set.updatedAt = new Date();
     return this.collection.updateOne(...args);
   }
 
