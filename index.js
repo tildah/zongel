@@ -109,13 +109,15 @@ class Zongel {
   }
 
   validateUpdate(...args) {
-    this.requiredKeys.forEach(key => { delete this.schema[key].required; })
+    const schemaClone = this.schema;
+    this.requiredKeys.forEach(key => { delete schemaClone[key].required; })
 
-    const setValid = this.ajv.validate(this.ajvSchema, args[1].$set);
+    const ajvSchemaClone = { properties: schemaClone };
+    const setValid = this.ajv.validate(ajvSchemaClone, args[1].$set);
     if (!setValid) return this.onReject(this.ajv.errors);
 
-    const isUnsettingRequired = Object.keys(args[1].$unset)
-      .some(key => this.requiredKeys.includes(key))
+    const isUnsettingRequired = args[1].$unset && Object.keys(args[1].$unset)
+      .some(key => this.requiredKeys.includes(key));
     if (isUnsettingRequired)
       return this.onReject([{ message: 'Cannot unset required property' }]);
   }
