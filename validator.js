@@ -17,6 +17,22 @@ ajv.addType("date", {
   }
 })
 
+ajv.addKeyword("laterThan", {
+  compile: (refDate, propSchema) => {
+    return (data, path, object, key) => {
+      return new Date(refDate).getTime() < data.getTime();
+    }
+  }
+})
+
+ajv.addKeyword("earlierThan", {
+  compile: (refDate, propSchema) => {
+    return (data, path, object, key) => {
+      return new Date(refDate).getTime() > data.getTime();
+    }
+  }
+})
+
 ajv.addType("mongoid", {
   modifying: true,
   compile: (...args) => {
