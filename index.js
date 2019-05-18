@@ -32,8 +32,13 @@ class Zongel {
     return Object.keys(this.schema).filter(key => this.schema[key].required)
   }
 
-  get ajvSchema() {
-    return { properties: this.schema };
+  getAjvSchema(evenType) {
+    const guestSchema = this[`${evenType}Schema`];
+    const res = { ...this.schema };
+    for (const key in guestSchema) {
+      res[key] = { ...res[key], ...guestSchema[key] };
+    }
+    return { properties: res };
   }
 
   get timestamps() { return { createdAt: 1, updatedAt: 1 }; }
@@ -78,7 +83,7 @@ class Zongel {
   }
 
   async insertOne(...args) {
-    const valid = this.ajv.validate(this.ajvSchema, args[0]);
+    const valid = this.ajv.validate(this.getAjvSchema("create"), args[0]);
     if (!valid) return this.onReject(this.ajv.errors);
     if (this.timestamps.createdAt) args[0].createdAt = new Date();
     const result = await this.collection.insertOne(...args);
@@ -88,7 +93,7 @@ class Zongel {
   async insertMany(...args) {
     const schema = {
       type: "array",
-      items: { type: "object", ...this.ajvSchema }
+      items: { type: "object", ...this.getAjvSchema("create") }
     };
     const valid = this.ajv.validate(schema, args[0]);
     if (!valid) return this.onReject(this.ajv.errors);
@@ -109,11 +114,10 @@ class Zongel {
   }
 
   validateUpdate(...args) {
-    const schemaClone = this.schema;
-    this.requiredKeys.forEach(key => { delete schemaClone[key].required; })
+    const schema = this.getAjvSchema("update");
+    this.requiredKeys.forEach(key => delete schema.properties[key].required);
 
-    const ajvSchemaClone = { properties: schemaClone };
-    const setValid = this.ajv.validate(ajvSchemaClone, args[1].$set);
+    const setValid = this.ajv.validate(schema, args[1].$set);
     if (!setValid) return this.onReject(this.ajv.errors);
 
     const isUnsettingRequired = args[1].$unset && Object.keys(args[1].$unset)
