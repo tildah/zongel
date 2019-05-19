@@ -1,3 +1,4 @@
+const ObjectID = require("mongodb").ObjectID;
 const ajv = require("./validator.js");
 
 const ERRNCL = `Unknown collection name. 
@@ -78,6 +79,7 @@ class Zongel {
   }
 
   async findOne(...args) {
+    if (typeof args[0]._id === "string") args[0]._id = new ObjectID(args[0]._id);
     args[1] = this.addQueryFields(args[1]);
     return await this.collection.findOne(...args);
   }
