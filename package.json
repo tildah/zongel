@@ -1,6 +1,6 @@
 {
   "name": "zongel",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "A model class for ZinkyJS",
   "main": "index.js",
   "scripts": {
