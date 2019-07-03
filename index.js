@@ -110,6 +110,13 @@ class Zongel {
     return this.collection.updateOne(...args);
   }
 
+  findOneAndUpdate(...args) {
+    this.validateUpdate(...args);
+    if (this.timestamps.updatedAt)
+      args[1].$set.updatedAt = new Date();
+    return this.collection.findOneAndUpdate(...args);
+  }
+
   updateMany(...args) {
     this.validateUpdate(...args);
     return this.collection.updateMany(...args);
