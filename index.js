@@ -39,7 +39,7 @@ class Zongel {
     for (const key in guestSchema) {
       res[key] = { ...res[key], ...guestSchema[key] };
     }
-    return { properties: res };
+    return { additionalProperties: false, properties: res };
   }
 
   get timestamps() { return { createdAt: 1, updatedAt: 1 }; }

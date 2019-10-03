@@ -3,7 +3,8 @@ const ObjectID = require("mongodb").ObjectID;
 
 const ajv = new Ajv({
   coerceTypes: true,
-  useDefaults: true
+  useDefaults: true,
+  removeAdditional: true
 });
 
 ajv.addType("date", {
