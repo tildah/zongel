@@ -64,7 +64,7 @@ class Zongel {
   }
 
   addQueryFields(options = {}) {
-    options.projection = {};
+    if(this.privateKeys.length) options.projection = {};
     this.privateKeys.forEach(key => { options.projection[key] = 0; });
     return options;
   }
