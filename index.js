@@ -104,6 +104,7 @@ class Zongel {
   }
 
   updateOne(...args) {
+    args[1].$set = args[1].$set || {};
     this.validateUpdate(...args);
     if (this.timestamps.updatedAt)
       args[1].$set.updatedAt = new Date();
@@ -111,6 +112,7 @@ class Zongel {
   }
 
   findOneAndUpdate(...args) {
+    args[1].$set = args[1].$set || {};
     this.validateUpdate(...args);
     if (this.timestamps.updatedAt)
       args[1].$set.updatedAt = new Date();
@@ -125,9 +127,11 @@ class Zongel {
   validateUpdate(...args) {
     const schema = this.getAjvSchema("update");
     this.requiredKeys.forEach(key => delete schema.properties[key].required);
-
-    const setValid = this.ajv.validate(schema, args[1].$set);
+    
+    const cobay = {...args[1].$set};
+    const setValid = this.ajv.validate(schema, cobay);
     if (!setValid) return this.onReject(this.ajv.errors);
+
 
     const isUnsettingRequired = args[1].$unset && Object.keys(args[1].$unset)
       .some(key => this.requiredKeys.includes(key));
