@@ -1,5 +1,5 @@
 const ObjectID = require("mongodb").ObjectID;
-const ajv = require("./validator.js");
+const AJV = require("./validator.js");
 
 const ERRNCL = `Unknown collection name. 
 Please add a getter "collectionName" to the class`;
@@ -14,10 +14,14 @@ class Zongel {
 
   constructor(md) {
     this.md = md;
-    this.ajv = ajv;
+    this.ajv = AJV(this.settings);
     if (this.customTypes) this.addCustomTypes();
     this.createUniques();
     return new Proxy(this, proxyHandler)
+  }
+
+  get settings() {
+    return { additionalProperties: false };
   }
 
   get collection() {
@@ -39,7 +43,10 @@ class Zongel {
     for (const key in guestSchema) {
       res[key] = { ...res[key], ...guestSchema[key] };
     }
-    return { additionalProperties: false, properties: res };
+    return { 
+      additionalProperties: this.settings.additionalProperties,
+      properties: res 
+    };
   }
 
   get timestamps() { return { createdAt: 1, updatedAt: 1 }; }
@@ -125,10 +132,11 @@ class Zongel {
   }
 
   validateUpdate(...args) {
+    const [,update,options] = args;
     const schema = this.getAjvSchema("update");
     this.requiredKeys.forEach(key => delete schema.properties[key].required);
     
-    const cobay = {...args[1].$set};
+    const cobay = options.adapt ? update.$set : {...update.$set};
     const setValid = this.ajv.validate(schema, cobay);
     if (!setValid) return this.onReject(this.ajv.errors);
 
