@@ -132,7 +132,7 @@ class Zongel {
   }
 
   validateUpdate(...args) {
-    const [,update,options] = args;
+    const [,update,options = {} ] = args;
     const schema = this.getAjvSchema("update");
     this.requiredKeys.forEach(key => delete schema.properties[key].required);
     
