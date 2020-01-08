@@ -148,7 +148,7 @@ class Zongel {
   }
 
   onReject(errors) {
-    throw new Error(errors.reduce((s, e) => s += `\n${e.dataPath} ${e.message}`, ""))
+    throw { code: "ZGLVLD", errors};
   }
 
 }
