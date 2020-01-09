@@ -133,8 +133,9 @@ class Zongel {
 
   validateUpdate(...args) {
     const [,update,options = {} ] = args;
-    const schema = this.getAjvSchema("update");
-    this.requiredKeys.forEach(key => delete schema.properties[key].required);
+    const rawSchema = this.getAjvSchema("update");
+    const schema = {properties: {}};
+    Object.keys(update.$set).forEach(key => schema.properties[key] = rawSchema.properties[key])
     
     const cobay = options.adapt ? update.$set : {...update.$set};
     const setValid = this.ajv.validate(schema, cobay);
