@@ -63,6 +63,11 @@ class Zongel {
       if (!prop.unique) return;
       this.collection.createIndex({ [key]: 1 }, { unique: true })
     })
+    if(this.compoundUnique)
+      this.collection.createIndex(
+        this.compoundUnique.reduce((obj, key) =>  ({ ...obj, [key]: 1 }) , {}),
+        { unique: true }
+      );
   }
 
   deletePrivate(item = {}) {
