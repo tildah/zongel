@@ -26,7 +26,7 @@ class Zongel {
 
   get collection() {
     if (!this.collectionName) throw new Error(ERRNCL);
-    return this.mds.A.db.collection(this.collectionName);
+    return this.A.db.collection(this.collectionName);
   }
 
   get privateKeys() {
