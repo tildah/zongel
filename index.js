@@ -43,9 +43,9 @@ class Zongel {
     for (const key in guestSchema) {
       res[key] = { ...res[key], ...guestSchema[key] };
     }
-    return { 
+    return {
       additionalProperties: this.settings.additionalProperties,
-      properties: res 
+      properties: res
     };
   }
 
@@ -63,11 +63,6 @@ class Zongel {
       if (!prop.unique) return;
       this.collection.createIndex({ [key]: 1 }, { unique: true })
     })
-    if(this.compoundUnique)
-      this.collection.createIndex(
-        this.compoundUnique.reduce((obj, key) =>  ({ ...obj, [key]: 1 }) , {}),
-        { unique: true }
-      );
   }
 
   deletePrivate(item = {}) {
@@ -76,7 +71,7 @@ class Zongel {
   }
 
   addQueryFields(options = {}) {
-    if(this.privateKeys.length) options.projection = {};
+    if (this.privateKeys.length) options.projection = {};
     this.privateKeys.forEach(key => { options.projection[key] = 0; });
     return options;
   }
@@ -137,12 +132,16 @@ class Zongel {
   }
 
   validateUpdate(...args) {
-    const [,update,options = {} ] = args;
+    const [, update, options = {}] = args;
     const rawSchema = this.getAjvSchema("update");
-    const schema = {properties: {}};
-    Object.keys(update.$set).forEach(key => schema.properties[key] = rawSchema.properties[key])
-    
-    const cobay = options.adapt ? update.$set : {...update.$set};
+    const schema = { properties: {} };
+    Object.keys(update.$set).forEach(key => {
+      const requiredKey = `*${key}`;
+      const pickedKey = rawSchema.properties.hasOwnProperty(requiredKey) ? requiredKey : key;
+      schema.properties[pickedKey] = rawSchema.properties[pickedKey]
+    })
+
+    const cobay = options.adapt ? update.$set : { ...update.$set };
     const setValid = this.ajv.validate(schema, cobay);
     if (!setValid) return this.onReject(this.ajv.errors);
 
@@ -154,7 +153,7 @@ class Zongel {
   }
 
   onReject(errors) {
-    throw { code: "ZGLVLD", errors};
+    throw { code: "ZGLVLD", errors };
   }
 
 }
