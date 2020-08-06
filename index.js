@@ -57,11 +57,16 @@ class Zongel {
     });
   }
 
-  createUniques() {
-    Object.keys(this.schema).forEach(key => {
+  async createUniques() {
+    Object.keys(this.schema).forEach(async key => {
       const prop = this.schema[key];
       if (!prop.unique) return;
-      this.collection.createIndex({ [key]: 1 }, { unique: true })
+      await this.collection.createIndex({ [key]: 1 }, { unique: true })
+    })
+    if(!this.compoundUnique) return;
+    this.compoundUnique.forEach(async compo => {
+      const keys = compo.reduce((o,k) => ({...o, [k]: 1}), {})
+      await this.collection.createIndex(keys, {unique: true})
     })
   }
 
