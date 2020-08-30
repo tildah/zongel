@@ -37,9 +37,17 @@ class Zongel {
     return Object.keys(this.schema).filter(key => this.schema[key].required)
   }
 
+  get timestampsSchema() {
+    return {
+      update: this.timestamps.updatedAt ? {updatedAt: "date"} : {},
+      create: this.timestamps.createdAt ? {createdAt: "date"} : {},
+    }
+  }
+
   getAjvSchema(evenType) {
     const guestSchema = this[`${evenType}Schema`];
-    const res = { ...this.schema };
+    const timeSchema = this.timestampsSchema[evenType];
+    const res = { ...this.schema, ...timeSchema };
     for (const key in guestSchema) {
       res[key] = { ...res[key], ...guestSchema[key] };
     }
