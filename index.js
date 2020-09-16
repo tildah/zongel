@@ -148,6 +148,7 @@ class Zongel {
     const [, update, options = {}] = args;
     const rawSchema = this.getAjvSchema("update");
     const schema = { properties: {} };
+    if(update.$set) {
     Object.keys(update.$set).forEach(key => {
       const requiredKey = `*${key}`;
       const pickedKey = rawSchema.properties.hasOwnProperty(requiredKey) ? requiredKey : key;
@@ -157,6 +158,7 @@ class Zongel {
     const cobay = options.adapt ? update.$set : { ...update.$set };
     const setValid = this.ajv.validate(schema, cobay);
     if (!setValid) return this.onReject(this.ajv.errors);
+    }
 
 
     const isUnsettingRequired = args[1].$unset && Object.keys(args[1].$unset)
